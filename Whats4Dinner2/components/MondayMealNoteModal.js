@@ -2,6 +2,8 @@ import React from 'react';
 import { View, StyleSheet, Modal, Text, TextInput, Button} from 'react-native';
 import { useState } from 'react';
 // import AsyncStorage from '@react-native-async-storage/async-storage'
+// import { doCreatData } from '../firebaseFunctions';
+import {firebase} from '../firebase'
 
 // A method that contains the code of the pop-up modal (screen)
 // Parameters: visible: Whether or not the modal is currently visible and interactive to the user.
@@ -19,14 +21,28 @@ const MondayMealNoteModal = ({visible, whatDay, onClose, onSubmit}) => {
     let MONDAY_TITLE_KEY = '@Monday_Title_input';
     let MONDAY_DESC_KEY = '@Monday_Desc_input';
   
+
+
+    const doCreateData = (dataToAdd) => {
+        const dataRef = firebase.firestore().collection('MondayData');
+        // const [addData, setData] = useState('');
+    
+        if(dataToAdd && dataToAdd.length > 0){
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            const data = {
+                heading: dataToAdd,
+                createdAt: timestamp
+            };
+            dataRef
+                .add(data)
+                .catch(error => alert(error.message))
+        }
+    }
     
     // A method that handles the submission of a meal note
     // Parameters: None
     const doSubmit = () => {
-        if(!MealTitle.trim()) return onClose();
-        onSubmit(whatDay, MealTitle, MealDescription)
-        onSubmitData()
-        onClose()
+        doCreateData(MealTitle)
     };
     
 
