@@ -1,110 +1,132 @@
 import React from 'react';
 import { View, StyleSheet, Modal, Text, TextInput, Button} from 'react-native';
 import { useState } from 'react';
-// import AsyncStorage from '@react-native-async-storage/async-storage'
+import {firebase} from '../firebase'
 
 // A method that contains the code of the pop-up modal (screen)
 // Parameters: visible: Whether or not the modal is currently visible and interactive to the user.
 //             onClose: This is used to hold the current value of the modal's visibility, in order to change it.
 // Returns: The visual components making up the modal and the function calls usable by the user. 
-const WednesdayMealNoteModal = ({visible, whatDay, onClose, onSubmit}) => {
+const WednesdayMealNoteModal = ({visible, whatDay, onClose}) => {
 
 
     // Creating state to hold the values given in the meal note.
     const [MealTitle, setTitle] = useState('');
     const [MealDescription, setDesc] = useState('');
 
-
-    // Creating the tokens AsyncStorage uses to hold data
-    let WEDNESDAY_TITLE_KEY = '@Wednesday_Title_input';
-    let WEDNESDAY_DESC_KEY = '@Wednesday_Desc_input';
-  
-    
-    // A method that handles the submission of a meal note
-    // Parameters: None
-    const doSubmit = () => {
-        if(!MealTitle.trim()) return onClose();
-        onSubmit(whatDay, MealTitle, MealDescription)
-        onSubmitData()
-        onClose()
-    };
-    
-
-//  A function that handles the saving of the given data. Save method: AsyncStorage.
-// Parameters: None
-// Returns: None
-    const onSubmitData = async () => {
-        try {
-            await AsyncStorage.setItem(WEDNESDAY_TITLE_KEY, MealTitle)
-            await AsyncStorage.setItem(WEDNESDAY_DESC_KEY, MealDescription)
-        } catch (err) {
-            console.log("There is an error in onSubmitData")
-        };
-    };
+    // Setting paths to the documents being used in the firestore database.
+    const titleDayReference = firebase.firestore().collection('WednesdayTitleData').doc('FriayTitle');
+    const descriptionDayReference = firebase.firestore().collection('WednesdayDescriptionData').doc('WednesdayDescription');
 
 
-    // A function that clears all data from Async storage. Not currently in use.
-    // Parameters: None
+    // A function that handles the creation and saving of the title and description
+    // Parameters: titleDataToAdd: The title that will be saved. 
+    //             descriptionDataToAdd: The description that will be saved.
     // Returns: None
-    const _clearAll = async () => {
-        try {
-        await AsyncStorage.clear();
-        } catch (error) {
-        console.log('There is an error in _clearAll');
+    const doCreateData = (titleDataToAdd, descriptionDataToAdd) => {
+        
+        // Saving the title to the specified collection and document if the title is not empty
+        if(titleDataToAdd && titleDataToAdd.length > 0){
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            const data = {
+                heading: titleDataToAdd,
+                createdAt: timestamp
+            };
+            titleDayReference
+                .set(data)
+                .catch(error => alert(error.message))
         }
-    };
-    
 
-    // A function that retrieves data from AsyncStorage and sets those values to MealTitle and MealDescription.
-    // Will not return data if there is no saved value, MealTitle and MealDescription are not affected. 
+        // Saving the description to the specified collection and document if the description is not empty
+        if(descriptionDataToAdd && descriptionDataToAdd.length > 0){
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            const data = {
+                heading: descriptionDataToAdd,
+                createdAt: timestamp
+            };
+            descriptionDayReference
+                .set(data)
+                .catch(error => alert(error.message))
+        }
+    }
+    
+    // A function that handles the deletion of data within firestore.
+    // It does so through the deletion of the document the data is stored on.
     // Parameters: None
     // Returns: None
-    const getData = async () => {
-        try{
-            const curTitle = await AsyncStorage.getItem(WEDNESDAY_TITLE_KEY)
-            const curDesc = await AsyncStorage.getItem(WEDNESDAY_DESC_KEY)
-            if (curTitle !== null) {
-                setTitle(curTitle)
-            
-            if (curDesc !== null) {
-                setDesc(curDesc)
-            }   }
-        }catch(e) {
-            console.log('There is an error in getData.')
-        };
+    const doDeleteData = () => {
+        
+        // Deleting the title
+        titleDayReference
+        .delete()
+        .then(() => {
+            console.log('Title was successfully deleted!');})
+        .catch((error) => {
+        console.error('Error deleting Title: ', error);});
+        
+        // Deleting the description
+        descriptionDayReference
+        .delete()
+        .then(() => {
+            console.log('Description was successfully deleted!');})
+        .catch((error) => {
+        console.error('Error deleting Description: ', error);});
+
+}
+
+    // A method that handles the submission of a meal note through calling doCreateData
+    // Parameters: None
+    // Returns: None
+    const doSubmit = () => {
+        doCreateData(MealTitle, MealDescription)
+    };
+    
+    
+    // A function that retrieves saved data from firestore.
+    // Parameters: None
+    // Returns: None
+    const getData = () => {
+
+        // Getting and saving the title to state
+        titleDayReference.get()
+        .then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const title = data.heading
+                setTitle(title)
+            } else {
+                console.log("This title does not exist")
+            }
+
+        })
+        .catch((error) => {
+            console.error('Error getting document: ', error);
+        })
+
+         // Getting and saving the description to state
+        descriptionDayReference.get()
+        .then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const description = data.heading
+                setDesc(description)
+            } else {
+                console.log("This title does not exist")
+            }
+
+        })
+        .catch((error) => {
+            console.error('Error getting document: ', error);
+        })
+
     };
    
-
-    // A function that clears MealTitle, both the state variable and the one saved in AsyncStorage.
-    // Parameters: None
-    // Returns: None
-    const _clearTitle = async () => {
-        try {
-            await AsyncStorage.removeItem(WEDNESDAY_TITLE_KEY)
-        } catch {
-            console.log('There is an error in clearTitle()')
-        };
-    };
-
-
-    // A function that clears MealDescription, both the state variable and the one saved in AsyncStorage.
-    // Parameters: None
-    // Returns: None
-    const _clearDesc = async () => {
-        try {
-            await AsyncStorage.removeItem(WEDNESDAY_DESC_KEY)
-        } catch {
-            console.log('There is an error in clearDesc()')
-        };
-    };
-
 
     // A function that calls _clearTitle and _clearDesc and sets MealTitle and MealDescription to empty strings.
     // Parameters: None
     // Returns: None
     const doClear = () => {
-        _clearTitle()
-        _clearDesc()
+        doDeleteData()
         setTitle('')
         setDesc('')
     };
@@ -170,6 +192,7 @@ const styles = StyleSheet.create({
     },
     container: {
         paddingHorizontal: 20,
+        textAlign: 'center'
     },
     title: {
         height: 50,
@@ -187,12 +210,10 @@ const styles = StyleSheet.create({
     dayTitle: {
         alignContent: 'center',
         fontSize: 25,
-        textAlign: 'center',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        textAlign: 'center'
     }
 
 });
 
 export default WednesdayMealNoteModal;
-
-

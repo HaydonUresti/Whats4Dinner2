@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Modal, Text, TextInput, Button} from 'react-native';
 import { useState } from 'react';
-// import AsyncStorage from '@react-native-async-storage/async-storage'
-// import { doCreatData } from '../firebaseFunctions';
 import {firebase} from '../firebase'
 
 // A method that contains the code of the pop-up modal (screen)
@@ -16,6 +14,7 @@ const MondayMealNoteModal = ({visible, whatDay, onClose}) => {
     const [MealTitle, setTitle] = useState('');
     const [MealDescription, setDesc] = useState('');
 
+    // Setting paths to the documents being used in the firestore database.
     const titleDayReference = firebase.firestore().collection('MondayTitleData').doc('MondayTitle');
     const descriptionDayReference = firebase.firestore().collection('MondayDescriptionData').doc('MondayDescription');
 
@@ -83,33 +82,43 @@ const MondayMealNoteModal = ({visible, whatDay, onClose}) => {
     };
     
     
-    // A function that retrieves saved data from firestore.
+   // A function that retrieves saved data from firestore.
     // Parameters: None
     // Returns: None
     const getData = () => {
-        // Getting and setting the title from firestore
+
+        // Getting and saving the title to state
         titleDayReference.get()
-        .then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-                if(doc.exists){
-                setTitle(doc.data().heading)
-            }});
+        .then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const title = data.heading
+                setTitle(title)
+            } else {
+                console.log("This title does not exist")
+            }
+
         })
         .catch((error) => {
-            console.log("Error getting title documents: ", error);
+            console.error('Error getting document: ', error);
         })
-        
-        // Getting and setting the description from firestore
+
+         // Getting and saving the description to state
         descriptionDayReference.get()
-        .then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-                if(doc.exists){
-                setDesc(doc.data().heading)
-            }});
+        .then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const description = data.heading
+                setDesc(description)
+            } else {
+                console.log("This title does not exist")
+            }
+
         })
         .catch((error) => {
-            console.log("Error getting description documents: ", error);
+            console.error('Error getting document: ', error);
         })
+
     };
    
 
