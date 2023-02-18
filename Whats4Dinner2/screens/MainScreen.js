@@ -50,6 +50,11 @@ function MainScreen() {
     .catch(error => alert(error.message))
   }
 
+const doChangePassword = () => {
+  navigation.replace("ChangePassword")
+}
+
+
   return (
     
 
@@ -124,6 +129,12 @@ function MainScreen() {
       onPress={doSignOut}
       >
         <Text style={styles.button}>Sign Out</Text>
+      </TouchableHighlight>
+
+      <TouchableHighlight
+      onPress={doChangePassword}
+      >
+        <Text>Change Password</Text>
       </TouchableHighlight>
 
       </View>
