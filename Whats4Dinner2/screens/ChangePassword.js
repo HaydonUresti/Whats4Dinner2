@@ -28,6 +28,9 @@ const ChangePassword = () =>{
 
     }
 
+    // A function that changes the screen to MainScreen allowing the user to not change their password
+    // Parameters: None 
+    // Returns: None
     const cancelChange = () => {
         navigation.replace("Main")
     }
