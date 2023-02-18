@@ -16,24 +16,35 @@ const MondayMealNoteModal = ({visible, whatDay, onClose, onSubmit}) => {
     const [MealTitle, setTitle] = useState('');
     const [MealDescription, setDesc] = useState('');
 
-
-    // Creating the tokens AsyncStorage uses to hold data
-    let MONDAY_TITLE_KEY = '@Monday_Title_input';
-    let MONDAY_DESC_KEY = '@Monday_Desc_input';
+    const titleDayReference = firebase.firestore().collection('MondayTitleData');
+    const descriptionDayReference = firebase.firestore().collection('MondayDescriptionData');
+    // // Creating the tokens AsyncStorage uses to hold data
+    // let MONDAY_TITLE_KEY = '@Monday_Title_input';
+    // let MONDAY_DESC_KEY = '@Monday_Desc_input';
   
 
 
-    const doCreateData = (dataToAdd) => {
-        const dataRef = firebase.firestore().collection('MondayData');
+    const doCreateData = (titleDataToAdd, descriptionDataToAdd) => {
+        
         // const [addData, setData] = useState('');
     
-        if(dataToAdd && dataToAdd.length > 0){
+        if(titleDataToAdd && titleDataToAdd.length > 0){
             const timestamp = firebase.firestore.FieldValue.serverTimestamp();
             const data = {
-                heading: dataToAdd,
+                heading: titleDataToAdd,
                 createdAt: timestamp
             };
-            dataRef
+            titleDayReference
+                .add(data)
+                .catch(error => alert(error.message))
+        }
+        if(descriptionDataToAdd && descriptionDataToAdd.length > 0){
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            const data = {
+                heading: descriptionDataToAdd,
+                createdAt: timestamp
+            };
+            descriptionDayReference
                 .add(data)
                 .catch(error => alert(error.message))
         }
@@ -42,7 +53,7 @@ const MondayMealNoteModal = ({visible, whatDay, onClose, onSubmit}) => {
     // A method that handles the submission of a meal note
     // Parameters: None
     const doSubmit = () => {
-        doCreateData(MealTitle)
+        doCreateData(MealTitle, MealDescription)
     };
     
 
@@ -75,19 +86,48 @@ const MondayMealNoteModal = ({visible, whatDay, onClose, onSubmit}) => {
     // Will not return data if there is no saved value, MealTitle and MealDescription are not affected. 
     // Parameters: None
     // Returns: None
-    const getData = async () => {
-        try{
-            const curTitle = await AsyncStorage.getItem(MONDAY_TITLE_KEY)
-            const curDesc = await AsyncStorage.getItem(MONDAY_DESC_KEY)
-            if (curTitle !== null) {
-                setTitle(curTitle)
+    // const getData = async () => {
+    //     try{
+    //         const curTitle = await AsyncStorage.getItem(MONDAY_TITLE_KEY)
+    //         const curDesc = await AsyncStorage.getItem(MONDAY_DESC_KEY)
+    //         if (curTitle !== null) {
+    //             setTitle(curTitle)
             
-            if (curDesc !== null) {
-                setDesc(curDesc)
-            }   }
-        }catch(e) {
-            console.log('There is an error in getData.')
-        };
+    //         if (curDesc !== null) {
+    //             setDesc(curDesc)
+    //         }   }
+    //     }catch(e) {
+    //         console.log('There is an error in getData.')
+    //     };
+    // };
+
+    const getData = () => {
+        // Getting and setting the title from firestore
+        // const users = await firestore().collection('Users').get();
+        titleDayReference.get()
+        .then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                if(doc.exists){
+                // console.log(doc.id, " => ", doc.data().heading);
+                setTitle(doc.data().heading)
+            }});
+        })
+        .catch((error) => {
+            console.log("Error getting title documents: ", error);
+        })
+        
+        // Getting and setting the description from firestore
+        descriptionDayReference.get()
+        .then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                if(doc.exists){
+                // console.log(doc.id, " => ", doc.data().heading);
+                setDesc(doc.data().heading)
+            }});
+        })
+        .catch((error) => {
+            console.log("Error getting description documents: ", error);
+        })
     };
    
 
